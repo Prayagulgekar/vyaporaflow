@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# local data (demo database, uploads, e2e database)
+.data/
+
+# environment and secrets
+.env
+.env.local
+.env.*.local
+.env.production
+*.pem
+
+# tests
+test-results/
+playwright-report/
+coverage/
+
+# misc
+.DS_Store
+npm-debug.log*
+.vercel
+supabase/.temp/
+supabase/.branches/
