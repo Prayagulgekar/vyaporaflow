@@ -121,3 +121,49 @@
     .data-table.stack td.num { text-align: right; }
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Public homepage (src/app/(marketing)/page.tsx). Scoped to .vf-home so the
+   application screens are unaffected. Motion is CSS only and switched off by
+   the prefers-reduced-motion rule above.
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.vf-home) { scroll-behavior: smooth; }
+}
+.vf-home { overflow-x: clip; }
+.vf-home [id] { scroll-margin-top: 1.5rem; }
+.vf-hero {
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, rgb(30 90 136 / 0.55), transparent 60%),
+    radial-gradient(50rem 30rem at -10% 110%, rgb(31 107 82 / 0.6), transparent 60%),
+    linear-gradient(160deg, #0c2f25 0%, #0f3a3a 45%, #0f3150 100%);
+}
+.vf-grid-lines {
+  background-image: linear-gradient(rgb(255 255 255 / 0.06) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 60% 30%, black 20%, transparent 75%);
+}
+.vf-gradient-text {
+  background: linear-gradient(90deg, #7fe0b5, #8cc8f5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@keyframes vf-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes vf-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.vf-rise { animation: vf-rise 700ms var(--ease-standard) both; }
+.vf-rise-2 { animation-delay: 120ms; }
+.vf-rise-3 { animation-delay: 240ms; }
+.vf-float { animation: vf-float 6s ease-in-out infinite; }
+.vf-float-slow { animation: vf-float 8s ease-in-out infinite 1s; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .vf-reveal { animation: vf-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 35%; }
+  }
+}
+.vf-card { transition: transform 200ms var(--ease-standard), box-shadow 200ms var(--ease-standard), border-color 200ms var(--ease-standard); }
+.vf-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgb(15 49 80 / 0.10); border-color: #b9d5c8; }
+.vf-faq summary { list-style: none; cursor: pointer; }
+.vf-faq summary::-webkit-details-marker { display: none; }
+.vf-faq summary .vf-chev { transition: transform 200ms var(--ease-standard); }
+.vf-faq[open] summary .vf-chev { transform: rotate(45deg); }

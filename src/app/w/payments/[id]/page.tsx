@@ -4,7 +4,12 @@ import { ActionForm, ConfirmSubmit, SelectField, SubmitButton, TextField } from 
 import { orNotFound } from "@/features/shared/util";
 import { allocatePaymentAction, reversePaymentAction } from "@/features/wholesaler/actions";
 import { PAYMENT_METHOD_LABEL, formatDateTime } from "@/lib/format";
+import { DocumentShare, SharePanelToggle } from "@/components/document-share";
+import { WhatsAppComposer } from "@/components/whatsapp";
+import { netAllocations, paymentOptions, methodLabel } from "@/features/shared/whatsapp-options";
+import { paymentReceiptMessage } from "@/lib/whatsapp-messages";
 import { getPayment, openInvoices } from "@/server/billing";
+import { loadParty } from "@/server/documents";
 import { requireWholesaler } from "@/server/viewer";
 
 export default async function PaymentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ recorded?: string }> }) {
@@ -14,9 +19,12 @@ export default async function PaymentPage({ params, searchParams }: { params: Pr
   const p = await orNotFound(getPayment(viewer.userId, id));
   const manager = company.role === "owner" || company.role === "manager";
   const invoices = p.status === "posted" && Number(p.unapplied) > 0 ? await openInvoices(viewer.userId, company.companyId, p.retailer_id) : [];
+  const payer = await loadParty(viewer.userId, p.retailer_id);
+  const greet = payer?.contact_name ?? p.counterparty;
+  const waOptions = paymentOptions(p, greet, company.companyName);
   return (
     <>
-      <PageHeader eyebrow={<Link href="/w/payments" className="link">Payments</Link>} title={`Payment ${p.payment_number}`} description={`From ${p.counterparty}`} actions={p.status === "reversed" ? <Badge tone="danger">Reversed</Badge> : <Badge tone="ok">Recorded</Badge>} />
+      <PageHeader eyebrow={<Link href="/w/payments" className="link">Payments</Link>} title={`Payment ${p.payment_number}`} description={`From ${p.counterparty}`} actions={<>{p.status === "reversed" ? <Badge tone="danger">Reversed</Badge> : <Badge tone="ok">Recorded</Badge>}<a href={`/w/documents/receipt/${p.payment_id}?download=1`} className="btn btn-secondary btn-sm" data-testid="receipt-pdf">Receipt PDF</a>{p.status === "posted" ? <WhatsAppComposer phone={payer?.phone} recipientName={greet} options={waOptions} /> : null}</>} />
       {recorded ? <div className="mb-4"><Notice tone="ok">Payment recorded and posted to the ledger.</Notice></div> : null}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Details">
@@ -58,6 +66,22 @@ export default async function PaymentPage({ params, searchParams }: { params: Pr
           ) : null}
         </Card>
       </div>
+      {p.status === "posted" ? (
+        <Card title="Share the payment receipt" className="mt-6">
+          <p className="mb-3 text-sm text-ink-muted">A PDF receipt with the amount, method, reference and the invoices this payment was applied to.</p>
+          <SharePanelToggle label="Prepare receipt to share">
+            <DocumentShare
+              testId="share-receipt"
+              pdfUrl={`/w/documents/receipt/${p.payment_id}`}
+              fallbackFilename="Payment-Receipt.pdf"
+              title={`Payment receipt ${p.payment_number}`}
+              phone={payer?.phone}
+              recipientName={greet}
+              message={paymentReceiptMessage({ recipientName: greet, senderBusiness: company.companyName, paymentNumber: p.payment_number, amount: p.amount, method: methodLabel(p.method), reference: p.reference, receivedAt: p.received_at, allocations: netAllocations(p.allocations), unapplied: p.unapplied, attached: true })}
+            />
+          </SharePanelToggle>
+        </Card>
+      ) : null}
       {manager && p.status === "posted" ? (
         <Card title="Reverse this payment" className="mt-6">
           <p className="mb-3 text-sm text-ink-muted">Use this when a cheque bounces or a payment was recorded by mistake. The payment stays on record, its invoice allocations are undone and the ledger is corrected.</p>

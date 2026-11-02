@@ -5,7 +5,9 @@ import { Badge, Card, Money, Notice } from "@/components/ui";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/client";
 import { requestConnectionAction } from "@/features/retailer/actions";
 import { params, type SearchParams } from "@/features/shared/util";
-import { formatQuantity, whatsappLink } from "@/lib/format";
+import { formatQuantity } from "@/lib/format";
+import { WhatsAppButton } from "@/components/whatsapp";
+import { generalMessage } from "@/lib/whatsapp-messages";
 import { coverageFor, getPublicWholesaler, resolveLocation, shopLocation } from "@/server/marketplace";
 import { relationshipFor } from "@/server/relationships";
 import { imageUrl } from "@/server/storage";
@@ -26,7 +28,6 @@ export default async function WholesalerPublic({ params: p, searchParams }: { pa
   ]);
   const coverage = await coverageFor(viewer?.userId ?? null, w.id, loc);
   const logo = imageUrl(w.logo_path);
-  const wa = whatsappLink(w.profile.whatsapp_number, `Hello ${w.name}, I found you on VyaporaFlow.`);
   return (
     <div className="mx-auto max-w-[var(--spacing-content)] px-4 py-10 sm:px-6">
       <p className="text-sm"><Link href="/marketplace" className="link">Marketplace</Link></p>
@@ -109,7 +110,7 @@ export default async function WholesalerPublic({ params: p, searchParams }: { pa
               <li>Payment terms: {w.profile.payment_terms_days ? `${w.profile.payment_terms_days} days` : "on delivery"}</li>
               <li>GST registered: {w.gstin_registered ? "yes" : "no"}</li>
             </ul>
-            {wa && retailer && rel?.status === "approved" ? <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm mt-3">WhatsApp</a> : null}
+            {retailer && rel?.status === "approved" ? <div className="mt-3"><WhatsAppButton hideWhenMissing phone={w.profile.whatsapp_number} recipientName={w.name} message={generalMessage({ recipientName: w.name, senderBusiness: retailer.companyName, topic: "your listing on VyaporaFlow" })} /></div> : null}
           </Card>
           <Card title="Delivery areas">
             {w.zones.length === 0 ? <p className="text-sm text-ink-muted">{w.profile.offers_delivery ? "Delivery is confirmed per order." : "Pickup from the godown."}</p> : (

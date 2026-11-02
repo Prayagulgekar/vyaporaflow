@@ -5,8 +5,11 @@ import { ActionForm, ConfirmSubmit, SubmitButton, TextField } from "@/components
 import { StatementTable } from "@/features/shared/statement";
 import { orNotFound } from "@/features/shared/util";
 import { decideRelationshipAction } from "@/features/wholesaler/actions";
-import { whatsappLink } from "@/lib/format";
-import { getStatement } from "@/server/billing";
+import { WhatsAppComposer } from "@/components/whatsapp";
+import { addMoney } from "@/domain/money";
+import { retailerAccountOptions } from "@/features/shared/whatsapp-options";
+import { todayIST } from "@/lib/format";
+import { getStatement, openInvoices } from "@/server/billing";
 import { listRetailers } from "@/server/relationships";
 import { requireWholesaler } from "@/server/viewer";
 import { userTx } from "@/server/rpc";
@@ -18,12 +21,23 @@ export default async function RetailerPage({ params }: { params: Promise<{ id: s
     q.query<{ id: string }>("select id from public.retailer_wholesaler_relationships where wholesaler_id = $1 and retailer_id = $2", [company.companyId, id]),
   ).catch(() => []);
   if (!rel[0]) return <Notice tone="warn">This retailer is not connected to {company.companyName}.</Notice>;
-  const [statement, list] = await Promise.all([
+  const [statement, list, open] = await Promise.all([
     orNotFound(getStatement(viewer.userId, company.companyId, id)),
     listRetailers(viewer.userId, company.companyId, { pageSize: 500 }),
+    openInvoices(viewer.userId, company.companyId, id),
   ]);
   const r = list.rows.find((x) => x.retailer_id === id)!;
-  const wa = whatsappLink(r.phone, `Hello ${r.contact_name ?? ""}, this is ${company.companyName}. Your current balance with us is ₹${statement.totals.balance}.`);
+  const overdueRows = open.filter((i) => i.payment_status === "overdue");
+  const waOptions = retailerAccountOptions({
+    recipientName: r.contact_name ?? r.name,
+    business: company.companyName,
+    outstanding: r.outstanding,
+    unapplied: r.unapplied,
+    overdue: addMoney("0", ...overdueRows.map((i) => i.due)),
+    oldestDueDate: open.length ? open.map((i) => i.due_date).sort()[0]! : null,
+    closingBalance: statement.totals.balance,
+    asOf: todayIST(),
+  });
   const manager = company.role === "owner" || company.role === "manager";
   return (
     <>
@@ -34,7 +48,9 @@ export default async function RetailerPage({ params }: { params: Promise<{ id: s
         actions={
           <>
             <RelationshipBadge status={r.status} />
-            {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">WhatsApp</a> : null}
+            <WhatsAppComposer phone={r.phone} recipientName={r.contact_name ?? r.name} options={waOptions} />
+            <ButtonLink href={`/w/retailers/${id}/documents#balance`} variant="secondary" size="sm">Send balance due</ButtonLink>
+            <ButtonLink href={`/w/retailers/${id}/documents#statement`} variant="secondary" size="sm">Statements (PDF)</ButtonLink>
             <ButtonLink href={`/w/payments/new?retailer=${id}`} size="sm">Record payment</ButtonLink>
           </>
         }

@@ -4,7 +4,10 @@ import { ButtonLink, Card, EmptyState, Money, Notice, PageHeader } from "@/compo
 import { AddToCart } from "@/features/retailer/add-to-cart";
 import { setCartAction } from "@/features/retailer/actions";
 import { params, type SearchParams } from "@/features/shared/util";
-import { formatQuantity, whatsappLink } from "@/lib/format";
+import { formatQuantity } from "@/lib/format";
+import { WhatsAppButton } from "@/components/whatsapp";
+import { generalMessage } from "@/lib/whatsapp-messages";
+import { whatsappPhone } from "@/lib/whatsapp";
 import { getCatalog } from "@/server/cart";
 import { listMyWholesalers } from "@/server/relationships";
 import { imageUrl } from "@/server/storage";
@@ -28,14 +31,14 @@ export default async function WholesalerCatalog({ params: p, searchParams }: { p
   }
   const items = await getCatalog(viewer.userId, company.companyId, id, { q: sp.q, category: sp.category });
   const categories = [...new Map(items.map((i) => [i.category_slug, i.category_name])).entries()];
-  const wa = whatsappLink(rel.whatsapp_number ?? rel.phone, `Hello ${rel.name}, this is ${company.companyName}. `);
+  const waPhone = whatsappPhone(rel.whatsapp_number) ? rel.whatsapp_number : rel.phone;
   return (
     <>
       <PageHeader
         eyebrow={<Link href="/r/wholesalers" className="link">My wholesalers</Link>}
         title={rel.name}
         description={<>{rel.city}{rel.min_order_value && Number(rel.min_order_value) > 0 ? <> · minimum order <Money value={rel.min_order_value} /></> : null} · you owe <Money value={rel.outstanding} /></>}
-        actions={<>{wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">WhatsApp</a> : null}<ButtonLink href={`/r/payments?wholesaler=${id}`} variant="secondary" size="sm">Statement</ButtonLink><ButtonLink href={`/r/cart#w-${id}`} size="sm">Go to cart</ButtonLink></>}
+        actions={<><WhatsAppButton hideWhenMissing phone={waPhone} recipientName={rel.name} message={generalMessage({ recipientName: rel.name, senderBusiness: company.companyName })} /><ButtonLink href={`/r/payments?wholesaler=${id}`} variant="secondary" size="sm">Statement</ButtonLink><ButtonLink href={`/r/cart#w-${id}`} size="sm">Go to cart</ButtonLink></>}
       />
       <form className="mb-3 flex gap-2" role="search">
         <label htmlFor="q" className="sr-only">Search this catalogue</label>

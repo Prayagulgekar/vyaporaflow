@@ -1,3 +1,4 @@
+import { whatsappUrl } from "@/lib/whatsapp";
 export { formatINR } from "@/domain/money";
 export { formatQuantity } from "@/domain/units";
 
@@ -53,12 +54,13 @@ export function initials(name: string): string {
     .join("");
 }
 
-/** wa.me link with a prefilled message. Opens WhatsApp; nothing is sent automatically. */
+/**
+ * wa.me link with a prefilled message, or null when the number is missing or
+ * not a valid mobile number. Opens WhatsApp; nothing is sent automatically.
+ * Kept for compatibility: new code uses src/lib/whatsapp.ts directly.
+ */
 export function whatsappLink(phone: string | null | undefined, message: string): string | null {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  const intl = digits.length === 10 ? `91${digits}` : digits;
-  return `https://wa.me/${intl}?text=${encodeURIComponent(message)}`;
+  return whatsappUrl(phone, message);
 }
 
 export const PAYMENT_METHOD_LABEL: Record<string, string> = {

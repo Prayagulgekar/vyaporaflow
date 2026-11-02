@@ -25,7 +25,7 @@ Wholesale management and B2B ordering for Indian wholesalers, distributors and t
 12. [Known limitations](#known-limitations)
 13. [Troubleshooting](#troubleshooting)
 
-More detail lives in [`docs/`](docs): [cash collections](docs/cash-collections.md), [architecture](docs/architecture.md), [configuration](docs/configuration.md), [security](docs/security.md), [testing](docs/testing.md) and [deployment](docs/deployment.md).
+More detail lives in [`docs/`](docs): [WhatsApp messages and PDF documents](docs/whatsapp-and-pdfs.md), [cash collections](docs/cash-collections.md), [architecture](docs/architecture.md), [configuration](docs/configuration.md), [security](docs/security.md), [testing](docs/testing.md) and [deployment](docs/deployment.md).
 
 ---
 

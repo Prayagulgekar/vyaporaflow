@@ -93,7 +93,7 @@ test("workflow B2: a retailer views an invoice and payment history", async ({ pa
   await page.goto("/r");
   await page.getByRole("link", { name: "VyaporaFlow home" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { name: "Your wholesale business. Under control." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "One Platform. Three Partners. Smarter Business." })).toBeVisible(); // new homepage headline (requested)
   await page.getByRole("link", { name: "Open workspace" }).click();
   await expect(page).toHaveURL(/\/r(\?|$)/);
 });

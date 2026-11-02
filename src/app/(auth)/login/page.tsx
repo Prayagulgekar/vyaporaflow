@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Notice } from "@/components/ui";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/client";
 import { loginAction } from "@/features/auth/actions";
+import { isDemoMode } from "@/lib/env";
 import { getViewer, homePathFor } from "@/server/viewer";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -45,6 +46,22 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
       <p className="mt-4 text-center text-sm text-ink-muted">
         Platform administrator? <Link href="/admin/login" className="link">Admin sign in</Link>
       </p>
+      {isDemoMode() ? (
+        <div className="mt-6 rounded-lg border border-line bg-surface p-4 text-sm">
+          <p className="font-semibold">Demo accounts</p>
+          <p className="mt-1 text-ink-muted">
+            All demo accounts use the password <code className="rounded bg-sunken px-1">VyaporaDemo#2026</code>. The businesses and people are fictional.
+          </p>
+          <ul className="mt-2 space-y-1">
+            {DEMO_ACCOUNTS.map(([label, email]) => (
+              <li key={email} className="flex flex-wrap justify-between gap-x-3">
+                <span className="text-ink-muted">{label}</span>
+                <code className="text-xs">{email}</code>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </>
   );
 }

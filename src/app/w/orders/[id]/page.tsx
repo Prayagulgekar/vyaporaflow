@@ -6,7 +6,10 @@ import { WHOLESALER_NEXT_ACTION, isOpen } from "@/domain/order-status";
 import { AddressBlock, OrderItemsTable, OrderTimeline } from "@/features/shared/order-view";
 import { orNotFound } from "@/features/shared/util";
 import { assignDeliveryAction, generateInvoiceAction, transitionOrderAction } from "@/features/wholesaler/actions";
-import { formatDateTime, whatsappLink, PAYMENT_METHOD_LABEL } from "@/lib/format";
+import { formatDateTime, PAYMENT_METHOD_LABEL } from "@/lib/format";
+import { WhatsAppComposer } from "@/components/whatsapp";
+import { deliveryAssignmentOption, generalMessageOption, wholesalerOrderOptions } from "@/features/shared/whatsapp-options";
+import { listMembers } from "@/server/companies";
 import { listAssignableMembers } from "@/server/deliveries";
 import { getOrder } from "@/server/orders";
 import { requireWholesaler } from "@/server/viewer";
@@ -19,7 +22,10 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const next = WHOLESALER_NEXT_ACTION[order.status];
   const canAssign = ["accepted", "preparing", "ready_for_delivery"].includes(order.status) && (!order.delivery_status || ["failed", "cancelled", "assigned"].includes(order.delivery_status));
   const members = canAssign ? await listAssignableMembers(viewer.userId, company.companyId) : [];
-  const wa = whatsappLink(order.retailer.phone, `Hello ${order.retailer.contact_name ?? ""}, about your order ${order.order_number} from ${company.companyName}: `);
+  const wa = wholesalerOrderOptions(order, company.companyName);
+  const worker = order.assigned_worker_id && order.delivery_status && ["assigned", "out_for_delivery", "failed"].includes(order.delivery_status)
+    ? (await listMembers(viewer.userId, company.companyId).catch(() => [])).find((m) => m.user_id === order.assigned_worker_id) ?? null
+    : null;
   const suspended = company.companyStatus === "suspended";
 
   return (
@@ -138,7 +144,9 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                 ["GSTIN", order.retailer.gstin ?? "Not registered"],
               ]}
             />
-            {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm mt-3">Message on WhatsApp</a> : null}
+            <div className="mt-3">
+              <WhatsAppComposer phone={order.retailer.phone} recipientName={order.retailer.contact_name ?? order.retailer.name} options={wa.options} defaultId={wa.defaultId} label="Message on WhatsApp" />
+            </div>
           </Card>
           <Card title="Delivery">
             <AddressBlock a={order.delivery_address} />
@@ -146,6 +154,16 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
               {order.delivery_status ? <DeliveryStatusBadge status={order.delivery_status} /> : <span className="text-ink-muted">Not assigned yet</span>}
               {order.assigned_worker_name ? <span>{order.assigned_worker_name}</span> : null}
             </div>
+            {worker ? (
+              <div className="mt-3">
+                <WhatsAppComposer
+                  phone={worker.phone}
+                  recipientName={worker.full_name}
+                  options={[deliveryAssignmentOption(order, company.companyName, worker.full_name), generalMessageOption(worker.full_name, company.companyName, `order ${order.order_number}`)]}
+                  label="WhatsApp delivery person"
+                />
+              </div>
+            ) : null}
             {order.notes ? <p className="mt-3 rounded bg-sunken p-2 text-sm">Retailer note: {order.notes}</p> : null}
           </Card>
           <OrderTimeline order={order} />

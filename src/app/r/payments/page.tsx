@@ -38,7 +38,10 @@ export default async function RetailerPayments({ searchParams }: { searchParams:
       </Card>
       {statement && selected ? (
         <div className="mt-6">
-          <h2 className="mb-2 text-lg font-semibold">Statement with {selected.name}</h2>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">Statement with {selected.name}</h2>
+            <a href={`/r/documents/statement/${selected.wholesaler_id}?download=1`} className="btn btn-secondary btn-sm" data-testid="statement-pdf">Download statement PDF</a>
+          </div>
           <StatementTable lines={statement.lines} totals={statement.totals} />
         </div>
       ) : null}

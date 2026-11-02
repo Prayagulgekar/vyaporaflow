@@ -14,7 +14,7 @@ export default async function RetailerInvoice({ params }: { params: Promise<{ id
   return (
     <>
       <div className="print:hidden">
-        <PageHeader eyebrow={<Link href="/r/invoices" className="link">Invoices</Link>} title={`Invoice ${inv.invoice_number}`} actions={<><PaymentStatusBadge status={inv.status === "void" ? "void" : inv.payment_status} /><PrintButton /></>} />
+        <PageHeader eyebrow={<Link href="/r/invoices" className="link">Invoices</Link>} title={`Invoice ${inv.invoice_number}`} actions={<><PaymentStatusBadge status={inv.status === "void" ? "void" : inv.payment_status} /><PrintButton /><a href={`/r/documents/invoice/${inv.id}?download=1`} className="btn btn-secondary btn-sm" data-testid="invoice-pdf">Download PDF</a></>} />
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
         <InvoiceDocument inv={inv} />

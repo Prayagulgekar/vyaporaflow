@@ -6,7 +6,12 @@ import { InvoiceDocument, InvoiceSettlement } from "@/features/shared/invoice-vi
 import { PrintButton } from "@/features/shared/print-button";
 import { orNotFound } from "@/features/shared/util";
 import { creditNoteAction, voidInvoiceAction } from "@/features/wholesaler/actions";
+import { DocumentShare, SharePanelToggle } from "@/components/document-share";
+import { WhatsAppComposer } from "@/components/whatsapp";
+import { invoiceOptions } from "@/features/shared/whatsapp-options";
+import { invoiceShareMessage } from "@/lib/whatsapp-messages";
 import { getInvoice } from "@/server/billing";
+import { loadParty } from "@/server/documents";
 import { requireWholesaler } from "@/server/viewer";
 
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +20,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const inv = await orNotFound(getInvoice(viewer.userId, id));
   const manager = company.role === "owner" || company.role === "manager";
   const hasPayments = inv.allocations.some((a) => !a.reversal) && Number(inv.paid) > 0;
+  const buyer = await loadParty(viewer.userId, inv.retailer_id);
+  const greet = buyer?.contact_name ?? inv.buyer.name;
+  const wa = invoiceOptions(inv, greet);
   return (
     <>
       <div className="print:hidden">
@@ -26,6 +34,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             <>
               <PaymentStatusBadge status={inv.status === "void" ? "void" : inv.payment_status} />
               <PrintButton />
+              <a href={`/w/documents/invoice/${inv.id}?download=1`} className="btn btn-secondary btn-sm" data-testid="invoice-pdf">Download PDF</a>
+              <WhatsAppComposer phone={buyer?.phone} recipientName={greet} options={wa.options} defaultId={wa.defaultId} />
               {inv.status === "issued" && Number(inv.due) > 0 ? <ButtonLink href={`/w/payments/new?retailer=${inv.retailer_id}`} size="sm">Record payment</ButtonLink> : null}
             </>
           }
@@ -37,6 +47,20 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         <div className="space-y-6 print:hidden">
           <Card title="Payment status">
             <InvoiceSettlement inv={inv} paymentHref={(pid) => `/w/payments/${pid}`} />
+          </Card>
+          <Card title="Share the invoice PDF">
+            <p className="mb-3 text-sm text-ink-muted">The same GST invoice as a PDF, to download or send to {greet} on WhatsApp.</p>
+            <SharePanelToggle label="Prepare PDF to share">
+              <DocumentShare
+                testId="share-invoice"
+                pdfUrl={`/w/documents/invoice/${inv.id}`}
+                fallbackFilename="Tax-Invoice.pdf"
+                title={`Tax invoice ${inv.invoice_number}`}
+                phone={buyer?.phone}
+                recipientName={greet}
+                message={invoiceShareMessage({ recipientName: greet, senderBusiness: inv.seller.name, invoiceNumber: inv.invoice_number, orderNumber: inv.order_number, invoiceDate: inv.invoice_date, dueDate: inv.due_date, invoiceTotal: inv.grand_total, amountDue: inv.due, attached: true })}
+              />
+            </SharePanelToggle>
           </Card>
           {manager && inv.status === "issued" ? (
             <Card title="Credit note">

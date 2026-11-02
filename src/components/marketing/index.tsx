@@ -7,15 +7,7 @@ export function Screenshot({ src, alt, caption, width, height, mobile }: { src: 
   return (
     <figure className={mobile ? "mx-auto w-full max-w-[300px]" : "w-full"}>
       <div className={`overflow-hidden border border-line-strong bg-surface shadow-[var(--shadow-raised)] ${mobile ? "rounded-[22px] p-1.5" : "rounded-lg"}`}>
-        <Image
-  src={src}
-  alt={alt}
-  width={width}
-  height={height}
-  className={`h-auto w-full ${mobile ? "rounded-[17px]" : ""}`}
-  sizes={mobile ? "300px" : "(min-width: 1024px) 720px, 100vw"}
-  loading={src === "/screenshots/wholesaler-overview.png" ? "eager" : "lazy"}
-/>
+        <Image src={src} alt={alt} width={width} height={height} className={`h-auto w-full ${mobile ? "rounded-[17px]" : ""}`} sizes={mobile ? "300px" : "(min-width: 1024px) 720px, 100vw"} />
       </div>
       {caption ? <figcaption className="mt-2 text-center text-xs text-ink-muted">{caption}</figcaption> : null}
     </figure>

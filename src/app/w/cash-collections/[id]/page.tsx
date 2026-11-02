@@ -7,6 +7,10 @@ import { addMoney } from "@/domain/money";
 import { orNotFound } from "@/features/shared/util";
 import { PAYMENT_METHOD_LABEL, formatDateTime } from "@/lib/format";
 import { getCollection } from "@/server/collections";
+import { loadParty } from "@/server/documents";
+import { WhatsAppComposer } from "@/components/whatsapp";
+import { methodLabel, generalMessageOption } from "@/features/shared/whatsapp-options";
+import { cashCollectionMessage } from "@/lib/whatsapp-messages";
 import { requireWholesaler } from "@/server/viewer";
 
 export default async function CollectionDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +18,19 @@ export default async function CollectionDetail({ params }: { params: Promise<{ i
   const { viewer, company } = await requireWholesaler();
   const c = await orNotFound(getCollection(viewer.userId, id));
   if (c.wholesaler_id !== company.companyId) notFound();
+  const shop = await loadParty(viewer.userId, c.retailer_id);
+  const greet = shop?.contact_name ?? c.retailer_name;
+  const confirmable = c.status !== "reversed" && Number(c.amount) > 0;
+  const waOptions = [
+    ...(confirmable
+      ? [{
+          id: "collection",
+          label: "Collection confirmation",
+          message: cashCollectionMessage({ recipientName: greet, senderBusiness: company.companyName, collectionNumber: c.collection_number, paymentNumber: c.payment_number, amount: c.amount, method: methodLabel(c.method), reference: c.reference, collectedAt: c.collected_at, collectedBy: c.worker_name, orderNumber: c.order_number, balanceAfter: c.position?.balance_due }),
+        }]
+      : []),
+    generalMessageOption(greet, company.companyName, `order ${c.order_number}`),
+  ];
   const rows: [string, ReactNode][] = [
     ["Retailer", c.retailer_name],
     ["Order", <Link key="o" href={`/w/orders/${c.order_id}`} className="link">{c.order_number}</Link>],
@@ -27,7 +44,7 @@ export default async function CollectionDetail({ params }: { params: Promise<{ i
   ];
   return (
     <>
-      <PageHeader eyebrow={<Link href="/w/cash-collections" className="link">Cash Collections</Link>} title={`Collection ${c.collection_number}`} description={`${c.retailer_name} · ${c.order_number}`} actions={<HandoverStatusBadge status={c.handover_status} />} />
+      <PageHeader eyebrow={<Link href="/w/cash-collections" className="link">Cash Collections</Link>} title={`Collection ${c.collection_number}`} description={`${c.retailer_name} · ${c.order_number}`} actions={<><HandoverStatusBadge status={c.handover_status} /><WhatsAppComposer phone={shop?.phone} recipientName={greet} options={waOptions} /></>} />
       {c.status === "reversed" ? <div className="mb-4"><Notice tone="warn" title={`Reversed ${formatDateTime(c.reversed_at)}`}>{c.reversal_reason}</Notice></div> : null}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Collection">

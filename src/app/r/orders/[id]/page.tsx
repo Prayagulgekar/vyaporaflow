@@ -5,7 +5,10 @@ import { ActionForm, ConfirmSubmit, SubmitButton, TextField } from "@/components
 import { cancelOrderAction, reorderAction } from "@/features/retailer/actions";
 import { AddressBlock, OrderItemsTable, OrderTimeline } from "@/features/shared/order-view";
 import { orNotFound } from "@/features/shared/util";
-import { formatDateTime, whatsappLink } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
+import { whatsappPhone } from "@/lib/whatsapp";
+import { WhatsAppComposer } from "@/components/whatsapp";
+import { retailerOrderOptions } from "@/features/shared/whatsapp-options";
 import { getOrder } from "@/server/orders";
 import { requireRetailer } from "@/server/viewer";
 
@@ -15,7 +18,9 @@ export default async function RetailerOrder({ params, searchParams }: { params: 
   const { viewer, company } = await requireRetailer();
   const order = await orNotFound(getOrder(viewer.userId, id));
   if (order.retailer_id !== company.companyId) return <Notice tone="warn">This order belongs to another business.</Notice>;
-  const wa = whatsappLink(order.wholesaler.whatsapp ?? order.wholesaler.phone, `Hello ${order.wholesaler.name}, about my order ${order.order_number} (${company.companyName}): `);
+  // The wholesaler's WhatsApp number, else their business phone. Hidden when neither is a valid mobile number.
+  const waPhone = whatsappPhone(order.wholesaler.whatsapp) ? order.wholesaler.whatsapp : order.wholesaler.phone;
+  const wa = whatsappPhone(waPhone) ? retailerOrderOptions(order, company.companyName) : null;
   return (
     <>
       <PageHeader
@@ -34,7 +39,7 @@ export default async function RetailerOrder({ params, searchParams }: { params: 
               <input type="hidden" name="order_id" value={order.id} />
               <SubmitButton variant="secondary" pendingLabel="Adding…">Order these items again</SubmitButton>
             </ActionForm>
-            {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Message on WhatsApp</a> : null}
+            {wa ? <WhatsAppComposer phone={waPhone} recipientName={order.wholesaler.name} options={wa} defaultId={order.status === "placed" ? "new-order" : "general"} label="Message on WhatsApp" size="md" /> : null}
             {order.status === "placed" ? (
               <ActionForm action={cancelOrderAction}>
                 <input type="hidden" name="order_id" value={order.id} />

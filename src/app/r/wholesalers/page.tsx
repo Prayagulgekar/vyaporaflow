@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { RelationshipBadge } from "@/components/status";
 import { ButtonLink, Card, EmptyState, Money, PageHeader } from "@/components/ui";
-import { formatDate, whatsappLink } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { WhatsAppButton } from "@/components/whatsapp";
+import { generalMessage } from "@/lib/whatsapp-messages";
+import { whatsappPhone } from "@/lib/whatsapp";
 import { listMyWholesalers } from "@/server/relationships";
 import { requireRetailer } from "@/server/viewer";
 
@@ -14,7 +17,7 @@ export default async function MyWholesalers() {
       {rows.length === 0 ? <EmptyState title="Not connected to any wholesaler yet" action={<ButtonLink href="/r/discover">Find wholesalers</ButtonLink>} /> : (
         <ul className="grid gap-3 md:grid-cols-2">
           {rows.map((w) => {
-            const wa = whatsappLink(w.whatsapp_number ?? w.phone, `Hello ${w.name}, this is ${company.companyName}. `);
+            const waPhone = whatsappPhone(w.whatsapp_number) ? w.whatsapp_number : w.phone;
             return (
               <li key={w.relationship_id}>
                 <Card>
@@ -29,7 +32,7 @@ export default async function MyWholesalers() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     {w.status === "approved" ? <ButtonLink href={`/r/wholesalers/${w.wholesaler_id}`} size="sm">Order</ButtonLink> : null}
                     <ButtonLink href={`/marketplace/${w.slug}`} size="sm" variant="secondary">Profile</ButtonLink>
-                    {wa && w.status === "approved" ? <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">WhatsApp</a> : null}
+                    {w.status === "approved" ? <WhatsAppButton hideWhenMissing phone={waPhone} recipientName={w.name} message={generalMessage({ recipientName: w.name, senderBusiness: company.companyName })} /> : null}
                   </div>
                 </Card>
               </li>

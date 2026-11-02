@@ -63,22 +63,32 @@ export default async function MarketingLayout({ children }: { children: ReactNod
         {children}
       </main>
       <footer className="border-t border-line bg-sunken">
-        <div className="mx-auto grid max-w-[var(--spacing-content)] gap-8 px-4 py-10 text-sm sm:grid-cols-3 sm:px-6">
+        <div className="mx-auto grid max-w-[var(--spacing-content)] gap-8 px-4 py-10 text-sm sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
           <div>
             <Logo />
-            <p className="mt-3 max-w-xs text-ink-muted">Order, stock, delivery and payment records for wholesale distributors and the retailers they supply.</p>
+            <p className="mt-3 max-w-xs text-ink-muted">One platform for wholesalers, retailers and delivery partners: orders, stock, deliveries, invoices, payments and collections.</p>
           </div>
           <nav aria-label="Product" className="flex flex-col gap-2 text-ink-muted">
+            <p className="font-semibold text-ink">Product</p>
             <Link href="/features" className="hover:text-ink">Features</Link>
-            <Link href="/how-it-works" className="hover:text-ink">How it works</Link>
-            <Link href="/marketplace" className="hover:text-ink">Marketplace</Link>
+            <Link href="/how-it-works" className="hover:text-ink">How It Works</Link>
             <Link href="/pricing" className="hover:text-ink">Pricing</Link>
+            <Link href="/marketplace" className="hover:text-ink">Marketplace</Link>
+          </nav>
+          <nav aria-label="Solutions" className="flex flex-col gap-2 text-ink-muted">
+            <p className="font-semibold text-ink">Solutions</p>
+            <Link href="/for-wholesalers" className="hover:text-ink">For Wholesalers</Link>
+            <Link href="/for-retailers" className="hover:text-ink">For Retailers</Link>
           </nav>
           <nav aria-label="Company" className="flex flex-col gap-2 text-ink-muted">
+            <p className="font-semibold text-ink">Company</p>
             <Link href="/contact" className="hover:text-ink">Contact</Link>
-            <Link href="/terms" className="hover:text-ink">Terms of use</Link>
-            <Link href="/privacy" className="hover:text-ink">Privacy policy</Link>
+            <Link href="/privacy" className="hover:text-ink">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-ink">Terms</Link>
           </nav>
+        </div>
+        <div className="border-t border-line">
+          <p className="mx-auto max-w-[var(--spacing-content)] px-4 py-4 text-xs text-ink-faint sm:px-6">© {new Date().getFullYear()} VyaporaFlow. WhatsApp messages are never sent automatically; you review and send them.</p>
         </div>
       </footer>
     </div>
